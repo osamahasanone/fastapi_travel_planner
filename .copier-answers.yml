@@ -1,0 +1,6 @@
+# Changes here will be overwritten by Copier. Do not edit manually.
+_commit: 7701ff3
+_src_path: gh:osamahasanone/python_template
+description: Travel Planner
+project_name: fastapi_travel_planner
+python_version: '3.14'

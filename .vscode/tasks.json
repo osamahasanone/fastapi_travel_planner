@@ -1,0 +1,31 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        // Run
+        { "label": "Python: ipython", "type": "shell", "command": "uv run ipython", "problemMatcher": [] },
+
+        // Testing
+        { "label": "Pytest: run all tests", "type": "shell", "command": "uv run pytest", "problemMatcher": [] },
+
+        // Prek
+        { "label": "Prek: check all files", "type": "shell", "command": "prek run --all-files", "problemMatcher": [] },
+
+        // Ruff
+        { "label": "Ruff: lint", "type": "shell", "command": "uv run ruff check .", "problemMatcher": [] },
+        { "label": "Ruff: lint-and-fix", "type": "shell", "command": "uv run ruff check . --fix", "problemMatcher": [] },
+        { "label": "Ruff: format", "type": "shell", "command": "uv run ruff format .", "problemMatcher": [] },
+
+        // Ty
+        { "label": "Ty: check", "type": "shell", "command": "uv run ty check", "problemMatcher": [] },
+
+        // uv
+        { "label": "uv: add", "type": "shell", "command": "uv add ${input:packageName}", "problemMatcher": [] },
+        { "label": "uv: add --dev", "type": "shell", "command": "uv add --dev ${input:packageName}", "problemMatcher": [] },
+        { "label": "uv: remove", "type": "shell", "command": "uv remove ${input:packageName}", "problemMatcher": [] },
+        { "label": "uv: remove --dev", "type": "shell", "command": "uv remove ${input:packageName} --group dev", "problemMatcher": [] },
+        { "label": "uv: sync", "type": "shell", "command": "uv sync", "problemMatcher": [] }
+    ],
+    "inputs": [
+        { "id": "packageName", "type": "promptString", "description": "Package name" }
+    ]
+}

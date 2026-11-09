@@ -1,0 +1,28 @@
+# =============================================
+# Prek built-in checks
+# =============================================
+
+[[repos]]
+repo = "builtin"
+hooks = [
+    { id = "trailing-whitespace" },
+    { id = "end-of-file-fixer" },
+    { id = "check-merge-conflict" },
+    { id = "check-added-large-files" },
+    { id = "check-toml" },
+    { id = "check-yaml" },
+    { id = "check-json", exclude = "^\\.vscode/" },
+    { id = "detect-private-key" },
+]
+
+# =============================================
+# Python: linting, formatting and type checking
+# =============================================
+
+[[repos]]
+repo = "local"
+hooks = [
+    { id = "ruff-check", name = "Ruff check", language = "system", entry = "uv run ruff check", types = ["python"] },
+    { id = "ruff-format", name = "Ruff format", language = "system", entry = "uv run ruff format", types = ["python"] },
+    { id = "ty", name = "ty", language = "system", entry = "uv run ty check", types = ["python"], pass_filenames = false },
+]
