@@ -18,6 +18,6 @@ def test_405_says_which_methods_are_allowed() -> None:
 
 
 def test_errors_use_detail() -> None:
-    response = client.get("/trips")  # not built yet (Step 4)
+    response = client.get("/hotels")  # not built yet (Step 4)
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Not Found"}

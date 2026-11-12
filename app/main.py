@@ -2,6 +2,8 @@ from typing import Annotated, TypedDict
 
 from fastapi import FastAPI, HTTPException, Path, Query
 
+from app.schemas import Trip, TripCreate
+
 app = FastAPI(title="Trip Planner API", version="0.1.0")
 
 
@@ -50,3 +52,37 @@ def get_destination(destination_id: Annotated[int, Path(ge=1)]) -> Destination:
         if destination["id"] == destination_id:
             return destination
     raise HTTPException(status_code=404, detail="Destination not found")
+
+
+TRIPS: dict[int, Trip] = {}
+
+
+@app.post("/trips")
+def create_trip(trip: TripCreate) -> Trip:
+    if not any(d["id"] == trip.destination_id for d in DESTINATIONS):
+        raise HTTPException(
+            status_code=422,
+            detail=[
+                {
+                    "type": "destination_not_found",
+                    "loc": ["body", "destination_id"],
+                    "msg": "Destination not found",
+                    "input": trip.destination_id,
+                }
+            ],
+        )
+    new_trip = Trip(id=len(TRIPS) + 1, **trip.model_dump())
+    TRIPS[new_trip.id] = new_trip
+    return new_trip
+
+
+@app.get("/trips")
+def list_trips() -> list[Trip]:
+    return list(TRIPS.values())
+
+
+@app.get("/trips/{trip_id}")
+def get_trip(trip_id: Annotated[int, Path(ge=1)]) -> Trip:
+    if trip_id not in TRIPS:
+        raise HTTPException(status_code=404, detail="Trip not found")
+    return TRIPS[trip_id]
