@@ -7,7 +7,7 @@ nest only one level (to show who owns what).
 |---|---|---|---|---|
 | GET | /health | is the app alive? | 200 | built |
 | GET | /destinations | list destinations (filters in query) | 200 | built |
-| GET | /destinations/{destination_id} | one destination | 200 | planned |
+| GET | /destinations/{destination_id} | one destination | 200 | built |
 | GET | /trips | list my trips | 200 | planned |
 | POST | /trips | create a trip | 201 | planned |
 | GET | /trips/{trip_id} | one trip | 200 | planned |

@@ -15,7 +15,13 @@ def test_health() -> None:
 def test_list_destinations() -> None:
     response = client.get("/destinations")
     assert response.status_code == status.HTTP_200_OK
-    assert [d["name"] for d in response.json()] == ["Lisbon", "Kyoto", "Cape Town"]
+    assert [d["name"] for d in response.json()] == [
+        "Lisbon",
+        "Kyoto",
+        "Cape Town",
+        "Porto",
+        "Osaka",
+    ]
 
 
 def test_unknown_path_is_404() -> None:
