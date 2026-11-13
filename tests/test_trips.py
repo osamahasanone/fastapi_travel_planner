@@ -21,7 +21,7 @@ def errors(response) -> list[tuple[list, str]]:
 
 def test_create_trip_returns_it_with_an_id() -> None:
     response = client.post("/trips", json=VALID)
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == status.HTTP_201_CREATED
     body = response.json()
     assert body["id"] >= 1
     assert body["title"] == "Spring in Lisbon"
@@ -82,3 +82,31 @@ def test_missing_body_is_422() -> None:
     response = client.post("/trips")
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     assert errors(response) == [(["body"], "missing")]
+
+
+def test_response_includes_computed_nights() -> None:
+    body = client.post("/trips", json=VALID).json()
+    assert body["nights"] == 5  # noqa: PLR2004
+
+
+def test_delete_trip_is_204_with_empty_body() -> None:
+    trip_id = client.post("/trips", json=VALID).json()["id"]
+    response = client.delete(f"/trips/{trip_id}")
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.content == b""
+    assert client.get(f"/trips/{trip_id}").status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_delete_unknown_trip_is_404() -> None:
+    response = client.delete("/trips/9999")
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {"detail": "Trip not found"}
+
+
+def test_ids_are_not_reused_after_delete() -> None:
+    first = client.post("/trips", json=VALID).json()["id"]
+    second = client.post("/trips", json=VALID).json()["id"]
+    client.delete(f"/trips/{first}")
+    third = client.post("/trips", json=VALID).json()["id"]
+    assert third not in (first, second)
+    assert client.get(f"/trips/{second}").status_code == status.HTTP_200_OK

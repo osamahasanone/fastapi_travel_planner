@@ -1,6 +1,22 @@
 from datetime import date
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationInfo,
+    computed_field,
+    field_validator,
+)
+
+
+class DestinationOut(BaseModel):
+    """A destination as the API returns it."""
+
+    id: int
+    name: str
+    country: str
+    daily_cost_eur: int
 
 
 class TripCreate(BaseModel):
@@ -23,7 +39,18 @@ class TripCreate(BaseModel):
         return v
 
 
-class Trip(TripCreate):
-    """A stored trip: everything the client sent, plus the id the server gave it."""
+class TripOut(TripCreate):
+    """A stored trip as the API returns it: the client's fields + id + nights."""
 
     id: int
+
+    @computed_field
+    @property
+    def nights(self) -> int:
+        return (self.end_date - self.start_date).days
+
+
+class ErrorMessage(BaseModel):
+    """The body of a 404: {"detail": "..."}. Used to document errors in OpenAPI."""
+
+    detail: str
