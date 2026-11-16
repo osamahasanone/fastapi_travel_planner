@@ -16,3 +16,6 @@ wheels/
 
 # Environment variables
 .env
+
+# Uploaded files (Step 6)
+uploads/

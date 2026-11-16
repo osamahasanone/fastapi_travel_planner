@@ -50,6 +50,20 @@ class TripOut(TripCreate):
         return (self.end_date - self.start_date).days
 
 
+class DocumentOut(BaseModel):
+    """
+    A file attached to a trip, as the API returns
+    it (the bytes are downloaded separately).
+    """
+
+    id: int
+    trip_id: int
+    filename: str  # the client's original name, shown to people, never used as a path
+    content_type: str  # detected from the file's first bytes, not taken from the client
+    size_bytes: int
+    note: str | None = None
+
+
 class ErrorMessage(BaseModel):
     """The body of a 404: {"detail": "..."}. Used to document errors in OpenAPI."""
 

@@ -1,9 +1,21 @@
 from itertools import count
 from typing import Annotated, Any
 
-from fastapi import FastAPI, HTTPException, Path, Query, status
+from fastapi import (
+    FastAPI,
+    File,
+    Form,
+    HTTPException,
+    Path,
+    Query,
+    Response,
+    UploadFile,
+    status,
+)
+from fastapi.responses import FileResponse
 
-from app.schemas import DestinationOut, ErrorMessage, TripCreate, TripOut
+from app import storage
+from app.schemas import DestinationOut, DocumentOut, ErrorMessage, TripCreate, TripOut
 
 app = FastAPI(title="Trip Planner API", version="0.1.0")
 
@@ -56,7 +68,7 @@ _trip_ids = count(start=1)  # 1, 2, 3, ... never repeats, even after a delete
 
 
 @app.post("/trips", status_code=status.HTTP_201_CREATED)
-def create_trip(trip: TripCreate) -> TripOut:
+def create_trip(trip: TripCreate, response: Response) -> TripOut:
     if not any(d.id == trip.destination_id for d in DESTINATIONS):
         raise HTTPException(
             status_code=422,
@@ -71,6 +83,7 @@ def create_trip(trip: TripCreate) -> TripOut:
         )
     new_trip = TripOut(id=next(_trip_ids), **trip.model_dump())
     TRIPS[new_trip.id] = new_trip
+    response.headers["Location"] = f"/trips/{new_trip.id}"
     return new_trip
 
 
@@ -95,3 +108,70 @@ def delete_trip(trip_id: Annotated[int, Path(ge=1)]) -> None:
     if trip_id not in TRIPS:
         raise HTTPException(status_code=404, detail="Trip not found")
     del TRIPS[trip_id]
+
+
+DOCUMENTS: dict[int, DocumentOut] = {}
+_document_ids = count(start=1)
+
+
+@app.post(
+    "/trips/{trip_id}/documents",
+    status_code=status.HTTP_201_CREATED,
+    responses=NOT_FOUND,
+)
+def upload_document(
+    trip_id: Annotated[int, Path(ge=1)],
+    file: Annotated[UploadFile, File(description="PDF, PNG or JPEG, max 5 MB")],
+    response: Response,
+    note: Annotated[str | None, Form(max_length=200)] = None,
+) -> DocumentOut:
+    if trip_id not in TRIPS:
+        raise HTTPException(status_code=404, detail="Trip not found")
+
+    data = file.file.read(storage.MAX_DOCUMENT_BYTES + 1)
+    if len(data) > storage.MAX_DOCUMENT_BYTES:
+        raise HTTPException(status_code=413, detail="File too large (max 5 MB)")
+
+    detected = storage.detect_type(data)
+    if detected is None:
+        raise HTTPException(status_code=415, detail="Only PDF, PNG or JPEG files")
+    content_type, extension = detected
+
+    document = DocumentOut(
+        id=next(_document_ids),
+        trip_id=trip_id,
+        filename=file.filename or "unnamed",
+        content_type=content_type,
+        size_bytes=len(data),
+        note=note,
+    )
+    storage.save_document(storage.document_path(trip_id, document.id, extension), data)
+    DOCUMENTS[document.id] = document
+    response.headers["Location"] = f"/trips/{trip_id}/documents/{document.id}"
+    return document
+
+
+@app.get("/trips/{trip_id}/documents", responses=NOT_FOUND)
+def list_documents(trip_id: Annotated[int, Path(ge=1)]) -> list[DocumentOut]:
+    if trip_id not in TRIPS:
+        raise HTTPException(status_code=404, detail="Trip not found")
+    return [d for d in DOCUMENTS.values() if d.trip_id == trip_id]
+
+
+@app.get(
+    "/trips/{trip_id}/documents/{document_id}",
+    response_class=FileResponse,
+    responses=NOT_FOUND,
+)
+def download_document(
+    trip_id: Annotated[int, Path(ge=1)], document_id: Annotated[int, Path(ge=1)]
+) -> FileResponse:
+    document = DOCUMENTS.get(document_id)
+    if document is None or document.trip_id != trip_id:
+        raise HTTPException(status_code=404, detail="Document not found")
+    extension = storage.EXTENSIONS[document.content_type]
+    return FileResponse(
+        storage.document_path(trip_id, document_id, extension),
+        media_type=document.content_type,
+        filename=document.filename,
+    )
