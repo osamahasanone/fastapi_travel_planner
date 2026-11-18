@@ -19,14 +19,22 @@ def test_get_one_destination() -> None:
 def test_unknown_destination_is_404() -> None:
     response = client.get("/destinations/99")
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": "Destination not found"}
+    assert response.json() == {
+        "error": {
+            "code": "destination_not_found",
+            "message": "Destination not found",
+        }
+    }
 
 
 def test_destination_id_must_be_positive_int() -> None:
     for bad in ("abc", "0"):
         response = client.get(f"/destinations/{bad}")
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-        assert response.json()["detail"][0]["loc"] == ["path", "destination_id"]
+        assert response.json()["error"]["details"][0]["loc"] == [
+            "path",
+            "destination_id",
+        ]
 
 
 def test_filter_by_country() -> None:
@@ -55,4 +63,4 @@ def test_invalid_query_values_are_422() -> None:
     ]:
         response = client.get(url)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT, url
-        assert response.json()["detail"][0]["loc"] == ["query", field]
+        assert response.json()["error"]["details"][0]["loc"] == ["query", field]

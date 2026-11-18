@@ -64,7 +64,22 @@ class DocumentOut(BaseModel):
     note: str | None = None
 
 
-class ErrorMessage(BaseModel):
-    """The body of a 404: {"detail": "..."}. Used to document errors in OpenAPI."""
+class ErrorDetail(BaseModel):
+    """One problem in a 422: where it is (loc), what's wrong (msg), a stable type."""
 
-    detail: str
+    loc: list[str | int]
+    msg: str
+    type: str
+
+
+class ErrorInfo(BaseModel):
+    code: str  # stable, for code: "trip_not_found", "validation_error", ...
+    message: str  # for people
+    details: list[ErrorDetail] | None = None  # only on 422
+
+
+class ErrorResponse(BaseModel):
+    """The body of every error: {"error": {"code", "message", "details"?}}.
+    Documents errors in OpenAPI."""
+
+    error: ErrorInfo

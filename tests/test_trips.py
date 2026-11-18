@@ -16,7 +16,7 @@ VALID = {
 
 
 def errors(response) -> list[tuple[list, str]]:
-    return [(e["loc"], e["type"]) for e in response.json()["detail"]]
+    return [(e["loc"], e["type"]) for e in response.json()["error"]["details"]]
 
 
 def test_create_trip_returns_it_with_an_id() -> None:
@@ -48,7 +48,13 @@ def test_created_trip_can_be_read_back() -> None:
 def test_unknown_trip_is_404() -> None:
     response = client.get("/trips/9999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": "Trip not found"}
+    # in test_unknown_trip_is_404 and test_delete_unknown_trip_is_404:
+    assert response.json() == {
+        "error": {
+            "code": "trip_not_found",
+            "message": "Trip not found",
+        }
+    }
 
 
 def test_end_date_must_be_after_start_date() -> None:
@@ -100,7 +106,9 @@ def test_delete_trip_is_204_with_empty_body() -> None:
 def test_delete_unknown_trip_is_404() -> None:
     response = client.delete("/trips/9999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": "Trip not found"}
+    assert response.json() == {
+        "error": {"code": "trip_not_found", "message": "Trip not found"}
+    }
 
 
 def test_ids_are_not_reused_after_delete() -> None:

@@ -57,20 +57,20 @@ def test_upload_pdf_is_201_and_stored(trip_id: int, upload_dir: Path) -> None:
 def test_fake_pdf_is_415(trip_id: int) -> None:
     response = upload(trip_id, b"MZ\x90\x00 really an exe")
     assert response.status_code == status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
-    assert response.json() == {"detail": "Only PDF, PNG or JPEG files"}
+    assert response.json()["error"]["code"] == "unsupported_file_type"
 
 
 def test_too_large_is_413(trip_id: int, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(storage, "MAX_DOCUMENT_BYTES", 50)
     response = upload(trip_id, PDF)
     assert response.status_code == status.HTTP_413_CONTENT_TOO_LARGE
-    assert response.json() == {"detail": "File too large (max 5 MB)"}
+    assert response.json()["error"]["code"] == "file_too_large"
 
 
 def test_upload_to_unknown_trip_is_404() -> None:
     response = upload(9999, PDF)
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": "Trip not found"}
+    assert response.json()["error"]["code"] == "trip_not_found"
 
 
 def test_client_filename_is_not_used_as_path(trip_id: int, upload_dir: Path) -> None:

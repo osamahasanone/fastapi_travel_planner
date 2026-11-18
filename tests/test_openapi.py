@@ -22,7 +22,7 @@ def test_404_is_documented_with_its_body() -> None:
     ]:
         not_found = responses(path, method)["404"]
         schema = not_found["content"]["application/json"]["schema"]
-        assert schema == {"$ref": "#/components/schemas/ErrorMessage"}
+        assert schema == {"$ref": "#/components/schemas/ErrorResponse"}
 
 
 def test_delete_trip_documents_204_without_body() -> None:
@@ -32,3 +32,9 @@ def test_delete_trip_documents_204_without_body() -> None:
 def test_trip_out_schema_includes_nights() -> None:
     trip_out = SPEC["components"]["schemas"]["TripOut"]
     assert "nights" in trip_out["properties"]
+
+
+def test_422_is_documented_with_our_error_body() -> None:
+    schema = responses("/trips", "post")["422"]["content"]["application/json"]["schema"]
+    assert schema == {"$ref": "#/components/schemas/ErrorResponse"}
+    assert "HTTPValidationError" not in SPEC["components"]["schemas"]
